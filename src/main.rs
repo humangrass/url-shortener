@@ -44,28 +44,26 @@ mod structs;
 mod queries;
 mod service;
 mod errors;
+mod api;
 
-use crate::commands::CommandHandler;
-use crate::errors::ShortenerError;
-use crate::queries::QueryHandler;
+use std::sync::{Arc, Mutex};
+use tokio::signal;
+use crate::api::create_router;
 use crate::service::UrlShortenerService;
-use crate::structs::{Slug, Url};
 
-fn main() {
-    let mut service = UrlShortenerService::new();
+#[tokio::main]
+async fn main() {
+    println!("Url shortener service");
+    println!("Listening on http://localhost:3000");
 
-    let url = Url("https://example.com".to_string());
-    let slug = Slug("example".to_string());
+    let service = Arc::new(Mutex::new(UrlShortenerService::new()));
+    let app = create_router(service);
+    let listener = tokio::net::TcpListener::bind("localhost:3000").await.unwrap();
 
-    let link = service
-        .handle_create_short_link(url.clone(), Some(slug.clone()))
-        .unwrap();
-    println!("Created Short Link: {:?}", link);
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal()).await.unwrap()
+}
 
-    service.handle_redirect(slug.clone()).unwrap();
-    let stats = service.get_stats(slug.clone()).unwrap();
-    println!("Stats after one redirect: {:?}", stats);
-
-    let duplicate = service.handle_create_short_link(url.clone(), Some(slug));
-    assert_eq!(duplicate, Err(ShortenerError::SlugAlreadyInUse));
+async fn shutdown_signal() {
+    let _ = signal::ctrl_c().await;
+    println!("Shutting down...");
 }

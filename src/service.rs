@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use crate::structs::{Slug, Url, Event};
+
+pub type SharedService = Arc<Mutex<UrlShortenerService>>;
 
 /// CQRS and Event Sourcing-based service implementation.
 pub struct UrlShortenerService {

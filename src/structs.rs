@@ -1,13 +1,15 @@
+use serde::{Serialize, Deserialize};
+
 /// A unique string (or alias) that represents the shortened version of the URL.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Slug(pub String);
 
 /// The original URL that the short link points to.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Url(pub String);
 
 /// Shortened URL representation.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ShortLink {
     /// A unique string (or alias) that represents the shortened version of the URL.
     pub slug: Slug,
@@ -17,7 +19,7 @@ pub struct ShortLink {
 }
 
 /// Statistics of the [`ShortLink`].
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Stats {
     /// [`ShortLink`] to which this [`Stats`] are related.
     pub link: ShortLink,
