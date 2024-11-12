@@ -1,15 +1,16 @@
 use serde::{Serialize, Deserialize};
+use utoipa::ToSchema;
 
 /// A unique string (or alias) that represents the shortened version of the URL.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub struct Slug(pub String);
 
 /// The original URL that the short link points to.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct Url(pub String);
 
 /// Shortened URL representation.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct ShortLink {
     /// A unique string (or alias) that represents the shortened version of the URL.
     pub slug: Slug,
