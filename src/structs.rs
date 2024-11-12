@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
 use utoipa::ToSchema;
 
+// TODO: maybe it's worth sorting out the traits
+
 /// A unique string (or alias) that represents the shortened version of the URL.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub struct Slug(pub String);
