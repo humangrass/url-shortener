@@ -39,130 +39,33 @@
 //! - Public API already written for this task must not be changed (any change to
 //!   the public API items must be considered as breaking change).
 
-#![allow(unused_variables, dead_code)]
+mod commands;
+mod structs;
+mod queries;
+mod service;
+mod errors;
 
-/// All possible errors of the [`UrlShortenerService`].
-#[derive(Debug, PartialEq)]
-pub enum ShortenerError {
-    /// This error occurs when an invalid [`Url`] is provided for shortening.
-    InvalidUrl,
-
-    /// This error occurs when an attempt is made to use a slug (custom alias)
-    /// that already exists.
-    SlugAlreadyInUse,
-
-    /// This error occurs when the provided [`Slug`] does not map to any existing
-    /// short link.
-    SlugNotFound,
-}
-
-/// A unique string (or alias) that represents the shortened version of the
-/// URL.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Slug(pub String);
-
-/// The original URL that the short link points to.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Url(pub String);
-
-/// Shortened URL representation.
-#[derive(Debug, Clone, PartialEq)]
-pub struct ShortLink {
-    /// A unique string (or alias) that represents the shortened version of the
-    /// URL.
-    pub slug: Slug,
-
-    /// The original URL that the short link points to.
-    pub url: Url,
-}
-
-/// Statistics of the [`ShortLink`].
-#[derive(Debug, Clone, PartialEq)]
-pub struct Stats {
-    /// [`ShortLink`] to which this [`Stats`] are related.
-    pub link: ShortLink,
-
-    /// Count of redirects of the [`ShortLink`].
-    pub redirects: u64,
-}
-
-/// Commands for CQRS.
-pub mod commands {
-    use super::{ShortLink, ShortenerError, Slug, Url};
-
-    /// Trait for command handlers.
-    pub trait CommandHandler {
-        /// Creates a new short link. It accepts the original url and an
-        /// optional [`Slug`]. If a [`Slug`] is not provided, the service will generate
-        /// one. Returns the newly created [`ShortLink`].
-        ///
-        /// ## Errors
-        ///
-        /// See [`ShortenerError`].
-        fn handle_create_short_link(
-            &mut self,
-            url: Url,
-            slug: Option<Slug>,
-        ) -> Result<ShortLink, ShortenerError>;
-
-        /// Processes a redirection by [`Slug`], returning the associated
-        /// [`ShortLink`] or a [`ShortenerError`].
-        fn handle_redirect(
-            &mut self,
-            slug: Slug,
-        ) -> Result<ShortLink, ShortenerError>;
-    }
-}
-
-/// Queries for CQRS
-pub mod queries {
-    use super::{ShortenerError, Slug, Stats};
-
-    /// Trait for query handlers.
-    pub trait QueryHandler {
-        /// Returns the [`Stats`] for a specific [`ShortLink`], such as the
-        /// number of redirects (clicks).
-        ///
-        /// [`ShortLink`]: super::ShortLink
-        fn get_stats(&self, slug: Slug) -> Result<Stats, ShortenerError>;
-    }
-}
-
-/// CQRS and Event Sourcing-based service implementation
-pub struct UrlShortenerService {
-    // TODO: add needed fields
-}
-
-impl UrlShortenerService {
-    /// Creates a new instance of the service
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl commands::CommandHandler for UrlShortenerService {
-    fn handle_create_short_link(
-        &mut self,
-        url: Url,
-        slug: Option<Slug>,
-    ) -> Result<ShortLink, ShortenerError> {
-        todo!("Implement the logic for creating a short link")
-    }
-
-    fn handle_redirect(
-        &mut self,
-        slug: Slug,
-    ) -> Result<ShortLink, ShortenerError> {
-        todo!("Implement the logic for redirection and incrementing the click counter")
-    }
-}
-
-impl queries::QueryHandler for UrlShortenerService {
-    fn get_stats(&self, slug: Slug) -> Result<Stats, ShortenerError> {
-        todo!("Implement the logic for retrieving link statistics")
-    }
-}
+use crate::commands::CommandHandler;
+use crate::errors::ShortenerError;
+use crate::queries::QueryHandler;
+use crate::service::UrlShortenerService;
+use crate::structs::{Slug, Url};
 
 fn main() {
+    let mut service = UrlShortenerService::new();
 
+    let url = Url("https://example.com".to_string());
+    let slug = Slug("example".to_string());
+
+    let link = service
+        .handle_create_short_link(url.clone(), Some(slug.clone()))
+        .unwrap();
+    println!("Created Short Link: {:?}", link);
+
+    service.handle_redirect(slug.clone()).unwrap();
+    let stats = service.get_stats(slug.clone()).unwrap();
+    println!("Stats after one redirect: {:?}", stats);
+
+    let duplicate = service.handle_create_short_link(url.clone(), Some(slug));
+    assert_eq!(duplicate, Err(ShortenerError::SlugAlreadyInUse));
 }
