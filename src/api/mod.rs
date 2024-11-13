@@ -10,11 +10,17 @@ use crate::queries::QueryHandler;
 use crate::service::SharedService;
 use crate::structs::{ShortLink, Slug, Url};
 
-/// Payload for creating a short link
+/// Payload for creating a short link with a random slug
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct CreateShortLinkRequest {
     pub url: String,
-    pub slug: Option<String>,
+}
+
+/// Request payload for creating a short link with a predefined slug
+#[derive(serde::Deserialize, utoipa::ToSchema)]
+pub struct CreateShortLinkWithSlugRequest {
+    pub url: String,
+    pub slug: String,
 }
 
 /// Response for stats
@@ -25,7 +31,7 @@ pub struct StatsResponse {
     pub redirects: u64,
 }
 
-/// Create a short link
+/// Create a short link with a random slug
 #[utoipa::path(
     post,
     path = "/shorten",
@@ -42,12 +48,37 @@ async fn create_short_link(
     let mut service = service.lock().unwrap();
 
     let url = Url(payload.url);
-    let slug = payload.slug.map(Slug);
 
     service
-        .handle_create_short_link(url, slug)
+        .handle_create_short_link(url, None)
         .map(Json)
         .map_err(|e| format!("{:?}", e))
+}
+
+
+/// Create a short link with a predefined slug
+#[utoipa::path(
+    post,
+    path = "/shorten/with-slug",
+    request_body = CreateShortLinkWithSlugRequest,
+    responses(
+    (status = 200, description = "Short link created with predefined slug", body = ShortLink),
+    (status = 400, description = "Slug already exists or bad request")
+    )
+)]
+async fn create_short_link_with_slug(
+    State(service): State<SharedService>,
+    Json(payload): Json<CreateShortLinkWithSlugRequest>,
+) -> Result<Json<ShortLink>, String> {
+    let mut service = service.lock().unwrap();
+
+    let url = Url(payload.url);
+    let slug = Slug(payload.slug);
+
+    match service.handle_create_short_link(url, Some(slug)) {
+        Ok(link) => Ok(Json(link)),
+        Err(e) => Err(format!("Error: {:?}", e)),
+    }
 }
 
 /// Redirect by slug
@@ -102,6 +133,7 @@ async fn get_stats(
 #[openapi(
     paths(
         create_short_link,
+        create_short_link_with_slug,
         handle_redirect,
         get_stats
     ),
@@ -118,6 +150,7 @@ pub struct ApiDoc;
 pub fn create_router(service: SharedService) -> Router {
     let api_router = Router::new()
         .route("/shorten", post(create_short_link))
+        .route("/shorten/with-slug", post(create_short_link_with_slug))
         .route("/redirect/:slug", get(handle_redirect))
         .route("/stats/:slug", get(get_stats));
 
