@@ -1,4 +1,4 @@
-# Url Shortener
+# URL Shortener
 
 # Usage
 
