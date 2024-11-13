@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use utoipa::ToSchema;
 
@@ -31,9 +32,28 @@ pub struct Stats {
     pub redirects: u64,
 }
 
-/// Events for Event Sourcing.
-#[derive(Debug, Clone)]
-pub enum Event {
+// TODO: is it worth getting rid of it?
+/// Wrapper for EventData
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Event {
+    pub data: EventData,
+}
+
+/// Events data for Event Sourcing.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EventData {
     LincCreated { slug: Slug, url: Url },
     RedirectOccurred { slug: Slug },
+    StatsUpdated { slug: Slug, redirects: u64 },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ServiceState {
+    pub links: HashMap<Slug, LinkData>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LinkData {
+    pub url: Url,
+    pub redirects: u64,
 }
