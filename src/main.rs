@@ -77,8 +77,6 @@ fn save_service_state(service: &Arc<Mutex<UrlShortenerService>>, file_path: &str
         Ok(service) => {
             if let Err(e) = service.save_state(file_path) {
                 eprintln!("Failed to save system state: {:?}", e);
-            } else {
-                println!("System state successfully saved.");
             }
         }
         Err(err) => {
