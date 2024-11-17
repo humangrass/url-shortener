@@ -5,14 +5,14 @@ use std::io::{BufReader, BufWriter, Write};
 use std::sync::{Arc, Mutex};
 use crate::structs::{Slug, Url, EventData, Event, ServiceState, LinkData};
 
-pub type SharedService = Arc<Mutex<UrlShortenerService>>;
+pub type SharedUrlShortener = Arc<Mutex<UrlShortener>>;
 
 /// CQRS and Event Sourcing-based service implementation.
-pub struct UrlShortenerService {
+pub struct UrlShortener {
     pub events: Vec<Event>,
 }
 
-impl UrlShortenerService {
+impl UrlShortener {
     /// Creates a new instance of the service.
     pub fn new() -> Self {
         Self { events: Vec::new() }
@@ -31,7 +31,7 @@ impl UrlShortenerService {
         let state = self.build_service_state();
 
         let serialized = serde_json::to_string(&state)?;
-        writeln!(writer, "{}", serialized)?;
+        writeln!(writer, "{serialized}")?;
         Ok(())
     }
 
@@ -49,7 +49,7 @@ impl UrlShortenerService {
 
         let mut state_links = HashMap::new();
         for (slug, url) in links {
-            let redirect_count = redirects.get(&slug).cloned().unwrap_or(0);
+            let redirect_count = redirects.get(&slug).copied().unwrap_or(0);
             state_links.insert(slug, LinkData { url, redirects: redirect_count });
         }
 

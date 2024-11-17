@@ -61,6 +61,16 @@ cargo build --release
 - On server shutdown, all in-memory state is saved to the file.
 - The file is replayed to restore state when the server restarts.
 
+## Linter
+
+To run the linter:
+
+```bash
+cargo clippy
+```
+
+Instructions for installing it can be found [here](https://github.com/rust-lang/rust-clippy).
+
 # Limitations
 
 This implementation uses a file-based approach for storage, making it suitable for small applications. For larger

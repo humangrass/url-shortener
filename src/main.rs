@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 mod commands;
 mod structs;
 mod queries;
@@ -9,12 +11,12 @@ use std::sync::{Arc, Mutex};
 use tokio::{signal, time};
 use std::time::Duration;
 use crate::api::create_router;
-use crate::service::UrlShortenerService;
+use crate::service::UrlShortener;
 
 #[tokio::main]
 async fn main() {
     if let Err(err) = run().await {
-        eprintln!("Fatal error occurred: {}", err);
+        eprintln!("Fatal error occurred: {err}");
         std::process::exit(1);
     }
 }
@@ -25,20 +27,17 @@ async fn run() -> anyhow::Result<()> {
     let file_path = "events.json";
 
     println!("Url shortener service");
-    println!("Listening on http://{}", address);
+    println!("Listening on http://{address}");
 
     let service = {
-        match UrlShortenerService::load_state(file_path) {
-            Ok(state) => {
-                println!("Saved state found. Importing...");
-                let service = Arc::new(Mutex::new(UrlShortenerService::from_state(state)));
-                println!("Done!");
-                service
-            }
-            Err(_) => {
-                println!("No saved state found. Starting fresh...");
-                Arc::new(Mutex::new(UrlShortenerService::new()))
-            }
+        if let Ok(state) = UrlShortener::load_state(file_path) {
+            println!("Saved state found. Importing...");
+            let service = Arc::new(Mutex::new(UrlShortener::from_state(state)));
+            println!("Done!");
+            service
+        } else {
+            println!("No saved state found. Starting fresh...");
+            Arc::new(Mutex::new(UrlShortener::new()))
         }
     };
 
@@ -64,7 +63,7 @@ async fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn shutdown_signal(service: Arc<Mutex<UrlShortenerService>>, file_path: &str) {
+async fn shutdown_signal(service: Arc<Mutex<UrlShortener>>, file_path: &str) {
     let _ = signal::ctrl_c().await;
     println!("Shutting down...");
 
@@ -72,15 +71,15 @@ async fn shutdown_signal(service: Arc<Mutex<UrlShortenerService>>, file_path: &s
 }
 
 // TODO: would take out
-fn save_service_state(service: &Arc<Mutex<UrlShortenerService>>, file_path: &str) {
+fn save_service_state(service: &Arc<Mutex<UrlShortener>>, file_path: &str) {
     match service.lock() {
         Ok(service) => {
-            if let Err(e) = service.save_state(file_path) {
-                eprintln!("Failed to save system state: {:?}", e);
+            if let Err(err) = service.save_state(file_path) {
+                eprintln!("Failed to save system state: {err:?}");
             }
         }
         Err(err) => {
-            eprintln!("Failed to acquire lock on service: {:?}", err);
+            eprintln!("Failed to acquire lock on service: {err:?}");
         }
     }
 }

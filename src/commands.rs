@@ -1,5 +1,5 @@
 use crate::errors::ShortenerError;
-use crate::service::UrlShortenerService;
+use crate::service::UrlShortener;
 use crate::structs::{Event, EventData, ShortLink, Slug, Url};
 
 /// Trait for command handlers.
@@ -25,7 +25,7 @@ pub trait CommandHandler {
     ) -> Result<ShortLink, ShortenerError>;
 }
 
-impl CommandHandler for UrlShortenerService {
+impl CommandHandler for UrlShortener {
     fn handle_create_short_link(
         &mut self,
         url: Url,
@@ -67,7 +67,7 @@ impl CommandHandler for UrlShortenerService {
             };
             self.events.push(event_redirect);
 
-            let redirects = self.replay().1.get(&slug).cloned().unwrap_or(0);
+            let redirects = self.replay().1.get(&slug).copied().unwrap_or(0);
             let event_stats = Event {
                 data: EventData::StatsUpdated {
                     slug: slug.clone(),

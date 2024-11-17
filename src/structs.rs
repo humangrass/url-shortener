@@ -33,7 +33,7 @@ pub struct Stats {
 }
 
 // TODO: is it worth getting rid of it?
-/// Wrapper for EventData
+/// Wrapper for `EventData`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
     pub data: EventData,

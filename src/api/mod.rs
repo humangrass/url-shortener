@@ -7,7 +7,7 @@ use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 use crate::commands::CommandHandler;
 use crate::queries::QueryHandler;
-use crate::service::SharedService;
+use crate::service::SharedUrlShortener;
 use crate::structs::{ShortLink, Slug, Url};
 
 /// Payload for creating a short link with a random slug
@@ -42,7 +42,7 @@ pub struct StatsResponse {
     )
 )]
 async fn create_short_link(
-    State(service): State<SharedService>,
+    State(service): State<SharedUrlShortener>,
     Json(payload): Json<CreateShortLinkRequest>,
 ) -> Result<Json<ShortLink>, String> {
     let mut service = service.lock().unwrap();
@@ -52,7 +52,7 @@ async fn create_short_link(
     service
         .handle_create_short_link(url, None)
         .map(Json)
-        .map_err(|e| format!("{:?}", e))
+        .map_err(|e| format!("{e:?}"))
 }
 
 
@@ -67,7 +67,7 @@ async fn create_short_link(
     )
 )]
 async fn create_short_link_with_slug(
-    State(service): State<SharedService>,
+    State(service): State<SharedUrlShortener>,
     Json(payload): Json<CreateShortLinkWithSlugRequest>,
 ) -> Result<Json<ShortLink>, String> {
     let mut service = service.lock().unwrap();
@@ -77,7 +77,7 @@ async fn create_short_link_with_slug(
 
     match service.handle_create_short_link(url, Some(slug)) {
         Ok(link) => Ok(Json(link)),
-        Err(e) => Err(format!("Error: {:?}", e)),
+        Err(e) => Err(format!("Error: {e:?}")),
     }
 }
 
@@ -90,8 +90,8 @@ async fn create_short_link_with_slug(
         (status = 404, description = "Slug not found")
     )
 )]
-async fn handle_redirect(
-    State(service): State<SharedService>,
+async fn redirect_by_slug(
+    State(service): State<SharedUrlShortener>,
     Path(slug): Path<String>,
 ) -> Result<Json<ShortLink>, String> {
     let mut service = service.lock().unwrap();
@@ -100,7 +100,7 @@ async fn handle_redirect(
     service
         .handle_redirect(slug)
         .map(Json)
-        .map_err(|e| format!("{:?}", e))
+        .map_err(|e| format!("{e:?}"))
 }
 
 /// Get stats for a short link
@@ -112,8 +112,8 @@ async fn handle_redirect(
         (status = 404, description = "Slug not found")
     )
 )]
-async fn get_stats(
-    State(service): State<SharedService>,
+async fn fetch_stats(
+    State(service): State<SharedUrlShortener>,
     Path(slug): Path<String>,
 ) -> Result<Json<StatsResponse>, String> {
     let service = service.lock().unwrap();
@@ -125,17 +125,17 @@ async fn get_stats(
             url: stats.link.url.0,
             redirects: stats.redirects,
         })
-    }).map_err(|e| format!("{:?}", e))
+    }).map_err(|e| format!("{e:?}"))
 }
 
-/// OpenAPI documentation
+/// `OpenAPI` documentation
 #[derive(OpenApi)]
 #[openapi(
     paths(
         create_short_link,
         create_short_link_with_slug,
-        handle_redirect,
-        get_stats
+        redirect_by_slug,
+        fetch_stats
     ),
     components(
         schemas(CreateShortLinkRequest, StatsResponse, ShortLink)
@@ -144,18 +144,18 @@ async fn get_stats(
         (name = "Url Shortener", description = "Operations for URL shortening service")
     )
 )]
-pub struct ApiDoc;
+pub struct Doc;
 
 /// Create the router for the application
-pub fn create_router(service: SharedService) -> Router {
+pub fn create_router(service: SharedUrlShortener) -> Router {
     let api_router = Router::new()
         .route("/shorten", post(create_short_link))
         .route("/shorten/with-slug", post(create_short_link_with_slug))
-        .route("/redirect/:slug", get(handle_redirect))
-        .route("/stats/:slug", get(get_stats));
+        .route("/redirect/:slug", get(redirect_by_slug))
+        .route("/stats/:slug", get(fetch_stats));
 
     Router::new()
-        .merge(Scalar::with_url("/scalar", ApiDoc::openapi()))
+        .merge(Scalar::with_url("/scalar", Doc::openapi()))
         .merge(api_router)
         .with_state(service)
 }

@@ -1,5 +1,5 @@
 use crate::errors::ShortenerError;
-use crate::service::UrlShortenerService;
+use crate::service::UrlShortener;
 use crate::structs::{ShortLink, Slug, Stats};
 
 /// Trait for query handlers.
@@ -10,7 +10,7 @@ pub trait QueryHandler {
     fn get_stats(&self, slug: Slug) -> Result<Stats, ShortenerError>;
 }
 
-impl QueryHandler for UrlShortenerService {
+impl QueryHandler for UrlShortener {
     fn get_stats(&self, slug: Slug) -> Result<Stats, ShortenerError> {
         let (links, redirects) = self.replay();
 
