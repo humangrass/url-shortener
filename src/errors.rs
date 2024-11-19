@@ -10,3 +10,11 @@ pub enum ShortenerError {
     /// This error occurs when the provided [`Slug`] does not map to any existing short link.
     SlugNotFound,
 }
+
+#[derive(Debug)]
+pub enum ServiceError {
+    LockError,
+    ProcessingError(String),
+    NotFound,
+    BadRequest,
+}

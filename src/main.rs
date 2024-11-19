@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic)]
 
 mod commands;
-mod structs;
+mod models;
 mod queries;
 mod service;
 mod errors;

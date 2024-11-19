@@ -8,7 +8,7 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::commands::CommandHandler;
 use crate::queries::QueryHandler;
 use crate::service::SharedUrlShortener;
-use crate::structs::{ShortLink, Slug, Url};
+use crate::models::{ShortLink, Slug, Url};
 
 /// Payload for creating a short link with a random slug
 #[derive(serde::Deserialize, utoipa::ToSchema)]
@@ -45,7 +45,7 @@ async fn create_short_link(
     State(service): State<SharedUrlShortener>,
     Json(payload): Json<CreateShortLinkRequest>,
 ) -> Result<Json<ShortLink>, String> {
-    let mut service = service.lock().unwrap();
+    let mut service = service.lock().map_err(|_| "Failed to acquire lock on the service".to_string())?;
 
     let url = Url(payload.url);
 
@@ -54,7 +54,6 @@ async fn create_short_link(
         .map(Json)
         .map_err(|e| format!("{e:?}"))
 }
-
 
 /// Create a short link with a predefined slug
 #[utoipa::path(
@@ -70,7 +69,7 @@ async fn create_short_link_with_slug(
     State(service): State<SharedUrlShortener>,
     Json(payload): Json<CreateShortLinkWithSlugRequest>,
 ) -> Result<Json<ShortLink>, String> {
-    let mut service = service.lock().unwrap();
+    let mut service = service.lock().map_err(|_| "Failed to acquire lock on the service".to_string())?;
 
     let url = Url(payload.url);
     let slug = Slug(payload.slug);
@@ -94,7 +93,7 @@ async fn redirect_by_slug(
     State(service): State<SharedUrlShortener>,
     Path(slug): Path<String>,
 ) -> Result<Json<ShortLink>, String> {
-    let mut service = service.lock().unwrap();
+    let mut service = service.lock().map_err(|_| "Failed to acquire lock on the service".to_string())?;
     let slug = Slug(slug);
 
     service
@@ -116,7 +115,7 @@ async fn fetch_stats(
     State(service): State<SharedUrlShortener>,
     Path(slug): Path<String>,
 ) -> Result<Json<StatsResponse>, String> {
-    let service = service.lock().unwrap();
+    let service = service.lock().map_err(|_| "Failed to acquire lock on the service".to_string())?;
     let slug = Slug(slug);
 
     service.get_stats(slug).map(|stats| {

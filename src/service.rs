@@ -3,7 +3,7 @@ use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{BufReader, BufWriter, Write};
 use std::sync::{Arc, Mutex};
-use crate::structs::{Slug, Url, EventData, Event, ServiceState, LinkData};
+use crate::models::{Slug, Url, EventData, Event, ServiceState, LinkData};
 
 pub type SharedUrlShortener = Arc<Mutex<UrlShortener>>;
 

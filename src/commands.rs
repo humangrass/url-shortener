@@ -1,6 +1,6 @@
 use crate::errors::ShortenerError;
 use crate::service::UrlShortener;
-use crate::structs::{Event, EventData, ShortLink, Slug, Url};
+use crate::models::{Event, EventData, ShortLink, Slug, Url};
 
 /// Trait for command handlers.
 pub trait CommandHandler {

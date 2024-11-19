@@ -1,6 +1,6 @@
 use crate::errors::ShortenerError;
 use crate::service::UrlShortener;
-use crate::structs::{ShortLink, Slug, Stats};
+use crate::models::{ShortLink, Slug, Stats};
 
 /// Trait for query handlers.
 pub trait QueryHandler {
